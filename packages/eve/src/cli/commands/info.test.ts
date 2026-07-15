@@ -1,11 +1,14 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { COMPILE_METADATA_KIND, COMPILE_METADATA_VERSION } from "#compiler/artifacts.js";
 import type { CompileAgentResult } from "#compiler/compile-agent.js";
 import { createCompiledAgentManifest, type CompiledChannelEntry } from "#compiler/manifest.js";
 import { getApplicationInfo } from "#internal/application/paths.js";
+import { inspectApplication } from "#services/inspect-application.js";
 
-import { buildApplicationInfoJson } from "./info.js";
+import { buildApplicationInfoJson, printApplicationInfo } from "./info.js";
+
+vi.mock("#services/inspect-application.js", () => ({ inspectApplication: vi.fn() }));
 
 const MESSAGING = {
   createSessionRoutePath: "/eve/v1/session",
@@ -130,5 +133,21 @@ describe("buildApplicationInfoJson", () => {
     expect(json.skills).toEqual([]);
     expect(json.appRoot).toBe(APP_ROOT);
     expect(json.messaging.stream).toBe("/eve/v1/session/:id/stream");
+  });
+});
+
+describe("printApplicationInfo", () => {
+  test("includes the authored tool count in text output", async () => {
+    vi.mocked(inspectApplication).mockResolvedValue({
+      application: getApplicationInfo(APP_ROOT),
+      compiledState: makeCompiledState(),
+      messaging: MESSAGING,
+    });
+    const output: string[] = [];
+
+    await printApplicationInfo({ log: (message) => output.push(message) }, APP_ROOT);
+
+    expect(output).toHaveLength(1);
+    expect(output[0]).toMatch(/Tools\s+1 tool/);
   });
 });

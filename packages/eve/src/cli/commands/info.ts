@@ -173,6 +173,10 @@ export async function printApplicationInfo(
         label: "Skills",
         value: pluralize(compiledState.manifest.skills.length, "skill"),
       },
+      {
+        label: "Tools",
+        value: pluralize(compiledState.manifest.tools.length, "tool"),
+      },
     );
     artifactRows.unshift(
       {
